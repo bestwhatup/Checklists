@@ -41,6 +41,9 @@ class ChecklishViewController: UITableViewController,ItemDetailViewControllerDel
         items.append(row4item)
         
         super.init(coder: aDecoder)
+        
+        print("Documents folder is \(documentsDirectory())")
+        print("Data file path is \(dataFilePath())")
     }
     
     override func viewDidLoad() {
@@ -70,6 +73,7 @@ class ChecklishViewController: UITableViewController,ItemDetailViewControllerDel
             
             item.toggleChecked()
             configureCheckmarkForCell(cell, withChecklistItem: item)
+            saveChecklistItems()
             tableView.deselectRowAtIndexPath(indexPath, animated: true)
         }
     }
@@ -78,6 +82,7 @@ class ChecklishViewController: UITableViewController,ItemDetailViewControllerDel
         if editingStyle == .Delete {
             items.removeAtIndex(indexPath.row)
             tableView.deleteRowsAtIndexPaths([indexPath], withRowAnimation: .Automatic)
+            saveChecklistItems()
         }
     }
     
@@ -109,6 +114,9 @@ class ChecklishViewController: UITableViewController,ItemDetailViewControllerDel
         //add item into collection
         items.append(item)
         
+        //save
+        saveChecklistItems()
+        
         //add item into tableview
         let indexPath = NSIndexPath(forRow: newRowIndex, inSection: 0)
         tableView.insertRowsAtIndexPaths([indexPath], withRowAnimation: .Automatic)
@@ -123,6 +131,8 @@ class ChecklishViewController: UITableViewController,ItemDetailViewControllerDel
                 configureTextForCell(cell, withChecklistItem: item)
             }
         }
+        //save
+        saveChecklistItems()
         return dismissViewControllerAnimated(true, completion: nil)
     }
     
@@ -143,5 +153,23 @@ class ChecklishViewController: UITableViewController,ItemDetailViewControllerDel
                 controller.itemToEdit = items[indexPath.row]
             }
         }
+    }
+    
+    //MARK: Saving Data into Document
+    func documentsDirectory() -> String {
+        let paths = NSSearchPathForDirectoriesInDomains(.DocumentDirectory, .UserDomainMask, true)
+        return paths[0]
+    }
+    
+    func dataFilePath() -> String {
+        return (documentsDirectory() as NSString).stringByAppendingPathComponent("Checklist.plist")
+    }
+    
+    func saveChecklistItems() {
+        let data = NSMutableData()
+        let archiver = NSKeyedArchiver(forWritingWithMutableData: data)
+        archiver.encodeObject(items, forKey: "ChecklistItems")
+        archiver.finishEncoding()
+        data.writeToFile(dataFilePath(), atomically: true)
     }
 }
